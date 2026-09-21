@@ -13,7 +13,14 @@ int stoneImg = -1;
 int bookImg = -1;
 int heartFullImg = -1;
 int heartHalfImg = -1;
-
+int portal3TextImg = -1;
+int manualImg = -1;
+int inspectImg = -1;
+int hintImg = -1;
+int mapHintTimer = 0;
+int lockedImg = -1;
+int solvedImg = -1;
+int fireballImg = -1;
 
 
 // --- PORTAL UNLOCK STATES ---
@@ -21,7 +28,10 @@ bool portal1Cleared = false;
 bool portal2Cleared = false;
 bool portal2Unlocked = false; // Unlocks after Portal 1
 bool portal3Unlocked = false; // Unlocks after Portal 2
+extern bool spellCollected;
+extern bool isTotemSolved;
 
+#include "SaveSystem.hpp"
 #include "Menu.hpp"
 #include "Portal.hpp"
 #include "Mainmap.hpp"
@@ -32,17 +42,26 @@ bool portal3Unlocked = false; // Unlocks after Portal 2
 
 void drawLevelClearedOverlay() {
 	if (levelClearTimer > 0) {
-		// Semi-transparent black banner box
 		iSetColor(0, 0, 0);
-		iFilledRectangle(300, 450, 400, 100);
+		iFilledRectangle(250, 420, 500, 150);
 
-		// Gold border
 		iSetColor(255, 215, 0);
-		iRectangle(300, 450, 400, 100);
+		iRectangle(250, 420, 500, 150);
 
-		// Banner text
-		iSetColor(255, 255, 255);
-		iText(410, 490, "LEVEL CLEARED!", GLUT_BITMAP_TIMES_ROMAN_24);
+		if (gameState == 5) {
+			iSetColor(255, 255, 255);
+			iText(400, 520, "LEVEL CLEARED!", GLUT_BITMAP_TIMES_ROMAN_24);
+
+			iSetColor(255, 100, 50);
+			iText(410, 480, "Acquired fire spell", GLUT_BITMAP_HELVETICA_18);
+
+			iSetColor(150, 150, 150);
+			iText(360, 450, "Skill ROCK THROW is now gone", GLUT_BITMAP_HELVETICA_18);
+		}
+		else {
+			iSetColor(255, 255, 255);
+			iText(410, 490, "LEVEL CLEARED!", GLUT_BITMAP_TIMES_ROMAN_24);
+		}
 	}
 }
 
@@ -55,50 +74,48 @@ void iDraw() {
 			currentLevel.draw();
 			drawPlayer();
 
-			// Interaction hint for Puzzle
-			if (isNearPuzzle(playerX, playerY)) {
-				iSetColor(255, 255, 255);
-				iText(playerX - 60, playerY + 50, "Press [F] to solve Mini Game", GLUT_BITMAP_HELVETICA_18);
-			}
-
-			// Interaction hint for Portal 1 (Top-Left)
-			if (playerX < 200 && playerY > 700) {
-				if (isPortalOpen) {
-					iSetColor(255, 255, 255);
-					iText(playerX - 60, playerY + 70, "Press [G] to enter Portal 1", GLUT_BITMAP_HELVETICA_18);
-				}
-				else {
-					iSetColor(255, 69, 0);
-					iText(playerX - 80, playerY + 70, "[LOCKED] Clear Mini Game first!", GLUT_BITMAP_HELVETICA_18);
+			// Display the general map instruction for 3 seconds
+			if (mapHintTimer > 0) {
+				if (hintImg != -1) {
+					// Centers the wide banner at the top of the screen
+					iShowImage(200, 750, 600, 200, hintImg);
 				}
 			}
 
-			// Interaction hint for Portal 2 (Top-Right)
-			if (playerX > 800 && playerY > 700) {
-				if (portal2Unlocked) {
-					iSetColor(0, 255, 255);
-					iText(playerX - 60, playerY + 70, "Press [H] to enter Portal 2", GLUT_BITMAP_HELVETICA_18);
-				}
-				else {
-					iSetColor(255, 69, 0);
-					iText(playerX - 80, playerY + 70, "[LOCKED] Clear Portal 1 first!", GLUT_BITMAP_HELVETICA_18);
-				}
-			}
-
-			// Interaction hint for Portal 3 (Near Big Tree)
-			if (isNearBigTree(playerX, playerY)) {
-				if (portal3Unlocked) {
-					iSetColor(0, 255, 255);
-					iText(playerX - 60, playerY + 70, "Press [J] to enter Portal 3", GLUT_BITMAP_HELVETICA_18);
-				}
-				else {
-					iSetColor(255, 69, 0);
-					iText(playerX - 80, playerY + 70, "[LOCKED] Clear Portal 2 first!", GLUT_BITMAP_HELVETICA_18);
-				}
-			}
 		}
 		else if (appState == APP_PUZZLE) {
 			drawPuzzleMinigame();
+		}
+
+
+		// --- PORTAL 1 (Top-Left) ---
+		if (playerX < 200 && playerY > 700) {
+			if (portal1Cleared) {
+				if (solvedImg != -1) iShowImage(70, 840, 180, 120, solvedImg);
+			}
+			else if (!isPortalOpen) { // Locked if main puzzle isn't solved
+				if (lockedImg != -1) iShowImage(70, 840, 180, 120, lockedImg);
+			}
+		}
+
+		// --- PORTAL 2 (Top-Right) ---
+		if (playerX > 800 && playerY > 700) {
+			if (portal2Cleared) {
+				if (solvedImg != -1) iShowImage(760, 840, 180, 120, solvedImg);
+			}
+			else if (!portal2Unlocked) { // Locked before Portal 1 is solved
+				if (lockedImg != -1) iShowImage(760, 840, 180, 120, lockedImg);
+			}
+		}
+
+		// --- PORTAL 3 (Near Big Tree) ---
+		if (isNearBigTree(playerX, playerY)) {
+			if (isTotemSolved) {
+				if (solvedImg != -1) iShowImage(410, 820, 180, 120, solvedImg);
+			}
+			else if (!portal3Unlocked) { // Locked before Portal 2 is solved
+				if (lockedImg != -1) iShowImage(410, 820, 180, 120, lockedImg);
+			}
 		}
 	}
 	else if (gameState == 3) drawStoryPopup();
@@ -119,15 +136,25 @@ void iDraw() {
 		drawPlayer();
 	}
 
-	//  DRAW ACTIVE STONES 
+	//  DRAW ACTIVE PROJECTILES 
 	if (gameState == 2 || gameState == 5 || gameState == 6 || gameState == 7) {
 		for (int i = 0; i < MAX_STONES; i++) {
 			if (playerStones[i].active) {
-				iSetColor(169, 169, 169);
-				iFilledCircle(playerStones[i].x, playerStones[i].y, 6);
+				if (spellCollected) {
+					// Draw the Fireball Upgrade
+					if (fireballImg != -1) {
+						// Offset by 12 to center the 24x24 image exactly on the collision point
+						iShowImage(playerStones[i].x - 12, playerStones[i].y - 12, 24, 24, fireballImg);
+					}
+				}
+				else {
+					// Draw the Default Rock
+					iSetColor(169, 169, 169);
+					iFilledCircle(playerStones[i].x, playerStones[i].y, 6);
 
-				iSetColor(211, 211, 211);
-				iFilledCircle(playerStones[i].x - 2, playerStones[i].y + 2, 2);
+					iSetColor(211, 211, 211);
+					iFilledCircle(playerStones[i].x - 2, playerStones[i].y + 2, 2);
+				}
 			}
 		}
 	}
@@ -169,7 +196,7 @@ void iDraw() {
 		// REQUIRES BOTH: All slimes dead AND the spell book collected!
 		if (!slimesRemaining && spellCollected) {
 			if (levelClearTimer == 0) {
-				levelClearTimer = 120; // 2 seconds clear timer
+				levelClearTimer = 300; 
 			}
 		}
 	}
@@ -210,29 +237,14 @@ void iDraw() {
 
 		if (!dronesRemaining) {
 			if (levelClearTimer == 0) {
-				levelClearTimer = 120; // 2 seconds clear timer
+				levelClearTimer = 120; 
 			}
 		}
 	}
 
 	//  LEVEL CLEAR TIMER 
 	if (levelClearTimer > 0) {
-		levelClearTimer--;
 		drawLevelClearedOverlay();
-
-		if (levelClearTimer == 0) {
-			if (gameState == 5) {
-				portal1Cleared = true;
-				portal2Unlocked = true; // Unlock Portal 2!
-			}
-			else if (gameState == 6) {
-				portal2Cleared = true;
-				portal3Unlocked = true; // Unlock Portal 3!
-			}
-			gameState = 2; // Return to Main Map
-			playerX = 500.0;
-			playerY = 500.0;
-		}
 	}
 
 	if (gameState == 2 || gameState == 5 || gameState == 6 || gameState == 7) {
@@ -245,12 +257,11 @@ void iDraw() {
 			double dy = playerY - 500.0;
 			if (dx * dx + dy * dy <= 80.0 * 80.0) {
 				if (!isTotemSolved) {
-					iSetColor(255, 255, 255);
-					iText(playerX - 70, playerY + 60, (char*)"Press [F] to inspect Totem", GLUT_BITMAP_HELVETICA_18);
 				}
 				else if (victoryTextTimer > 0) {
 					iSetColor(0, 255, 255);
-					iText(playerX - 120, playerY + 60, (char*)"The Runes glow brightly. You've solved it!", GLUT_BITMAP_HELVETICA_18);
+					// Centered text slightly higher than the totem
+					iText(350, 560, (char*)"The Runes glow brightly. You've solved it!", GLUT_BITMAP_HELVETICA_18);
 				}
 			}
 		}
@@ -258,15 +269,11 @@ void iDraw() {
 			drawRunePuzzle();
 		}
 		else if (appState == APP_INFO) {
-			iSetColor(243, 206, 161);
-			iFilledRectangle(200, 300, 600, 400);
-
-			iSetColor(255, 0, 0);
-			iText(420, 630, "-- PORTAL 3 --", GLUT_BITMAP_TIMES_ROMAN_24);
-
-			iSetColor(0, 0, 0);
-			iText(250, 520, (char*)"Objective: Find the ancient totem and ignite the 9 Runes.", GLUT_BITMAP_HELVETICA_18);
-			iText(250, 480, (char*)"Reward: A permanent increase to your maximum vitality.", GLUT_BITMAP_HELVETICA_18);
+			// Renders the stylized parchment text image
+			if (portal3TextImg != -1) {
+				// Drawn at (200, 300) with a 600x400 size to match the old popup dimensions
+				iShowImage(200, 300, 600, 400, portal3TextImg);
+			}
 		}
 	}
 }
@@ -277,14 +284,44 @@ void iMouse(int button, int state, int mx, int my) {
 		// 1. MAIN MENU BUTTONS
 		if (gameState == 0) {
 			for (int i = 0; i < 4; i++) {
-
 				if (mx >= menuBtns[i].x && mx <= (menuBtns[i].x + menuBtns[i].width) &&
 					my >= menuBtns[i].y && my <= (menuBtns[i].y + menuBtns[i].height)) {
 
-					if (i == 0) gameState = 2;       // ENTER GAME
+					if (i == 0) {
+						// RESUME OR NEW GAME
+						if (saveExists) {
+							loadGame();
+						}
+						else {
+							// Reset to default New Game state
+							playerX = 350.0;
+							playerY = 200.0;
+							playerHealth = 10;
+							maxHealth = 10;
+							portal1Cleared = false;
+							portal2Unlocked = false;
+						}
+						gameState = 2;
+						mapHintTimer = 180;
+					}
 					else if (i == 1) gameState = 3;  // STORY
 					else if (i == 2) gameState = 4;  // CREDITS
-					else if (i == 3) exit(0);        // EXIT
+					else if (i == 3) {
+						// CLEAR DATA
+						clearSaveData();
+
+						// Reset all live variables to a completely fresh state
+						playerX = 350.0;
+						playerY = 200.0;
+						playerHealth = 10;
+						maxHealth = 10;
+						portal1Cleared = false;
+						portal2Cleared = false;
+						portal2Unlocked = false;
+						portal3Unlocked = false;
+						spellCollected = false;
+						isTotemSolved = false;
+					}
 					break;
 				}
 			}
@@ -371,13 +408,39 @@ void fixedUpdate() {
 	if (victoryTextTimer > 0) {
 		victoryTextTimer--;
 	}
+	if (mapHintTimer > 0) {
+		mapHintTimer--;
+	}
 	if (playerIFrames > 0)
 		playerIFrames--;
 
 	//  STONE THROW COOLDOWN 
 	if (throwCooldown > 0) throwCooldown--;
 
-	//  FIRE A STONE 
+
+	if (levelClearTimer > 0) {
+		levelClearTimer--;
+		// When the 3-second portal clear timer hits zero, trigger the teleport
+		if (levelClearTimer == 0) {
+			if (gameState == 5) {
+				portal1Cleared = true;
+				portal2Unlocked = true;
+			}
+			else if (gameState == 6) {
+				portal2Cleared = true;
+				portal3Unlocked = true;
+			}
+
+			gameState = 2; // Return to Main Map
+			playerX = 500.0;
+			playerY = 500.0;
+			mapHintTimer = 180; // Trigger the 3-second map hint display
+			saveGame();
+			saveExists = true;
+		}
+	}
+
+	//  FIRE A PROJECTILE 
 	if (isKeyPressed(' ') && throwCooldown == 0) {
 		for (int i = 0; i < MAX_STONES; i++) {
 			if (!playerStones[i].active) {
@@ -448,7 +511,7 @@ void fixedUpdate() {
 			}
 
 			// Enter Portal 1 
-			if (isPortalOpen && (isKeyPressed('g') || isKeyPressed('G'))) {
+			if (isPortalOpen && !portal1Cleared && (isKeyPressed('f') || isKeyPressed('F'))) {
 				if (playerX < 200 && playerY > 700) {
 					gameState = 5;
 					playerX = 500.0;
@@ -457,17 +520,17 @@ void fixedUpdate() {
 			}
 
 			// Enter Portal 2 
-			if (isKeyPressed('h') || isKeyPressed('H')) {
-				if (playerX > 800 && playerY > 700 && portal2Unlocked) {
+			if (portal2Unlocked && !portal2Cleared && (isKeyPressed('f') || isKeyPressed('F'))) {
+				if (playerX > 800 && playerY > 700) {
 					gameState = 6;
 					playerX = 500.0;
 					playerY = 100.0;
 				}
 			}
 
-			// Enter Portal 3 
-			if (isKeyPressed('j') || isKeyPressed('J')) {
-				if (isNearBigTree(playerX, playerY) && portal3Unlocked) {
+			// Enter Portal 3
+			if (portal3Unlocked && !isTotemSolved && (isKeyPressed('f') || isKeyPressed('F'))) {
+				if (isNearBigTree(playerX, playerY)) {
 					gameState = 7;
 					playerX = 500.0;
 					playerY = 50.0;
@@ -580,10 +643,18 @@ int main() {
 	slimeImg = iLoadImage("slime.png");       
 	slimeBulletImg = iLoadImage("bullet.png"); 
 	bookImg = iLoadImage("book.png");
+	portal3TextImg = iLoadImage("text1.png");
+	manualImg = iLoadImage("manual.png");
+	hintImg = iLoadImage("hint.png"); 
+	lockedImg = iLoadImage("locked.png");
+	solvedImg = iLoadImage("solved.png");
+	fireballImg = iLoadImage("fireball.png");
 	setupBoxPositions();
 
 	initPortalSlimes();
 	initPortal2Drones();
+
+	checkSaveFile();
 
 	iSetTimer(16, fixedUpdate);
 
