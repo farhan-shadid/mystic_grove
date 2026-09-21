@@ -1,4 +1,6 @@
 #pragma once
+
+extern int manualImg;
 int runeGrid[3][3] = { 0 };
 bool isTotemSolved = false;
 
@@ -14,8 +16,9 @@ inline void drawRunePuzzle() {
 	iSetColor(20, 25, 30);
 	iFilledRectangle(0, 0, 1000, 1000);
 
-	iSetColor(255, 255, 255);
-	iText(250, 800, "IGNITE ALL 9 RUNES TO PROVE YOUR WORTH", GLUT_BITMAP_TIMES_ROMAN_24);
+	if (manualImg != -1) {
+		iShowImage(200, 700, 600, 300, manualImg);
+	}
 
 	int startX = 330;
 	int startY = 300;
