@@ -80,7 +80,7 @@ Open the project in Visual Studio 2013
 <img src="Images/Screenshot_1.png" width="350" height="350">
 
 ## Youtube Link
-[CSE 1200 Project: The Mystic Grove](https://www.youtube.com/)
+[CSE 1200 Project: The Mystic Grove]([https://www.youtube.com/](https://youtu.be/f0DgDbg-NUM))
 
 ## Project Report
-[Project Report: The Mystic Grove](https://drive.google.com/drive/u/1/my-drive)
+[Project Report: The Mystic Grove](https://docs.google.com/document/d/1W3orfNnDTETUW1lUT6vc1JXOTHpq8JL5/edit?usp=sharing&ouid=112354578460944714323&rtpof=true&sd=true)
