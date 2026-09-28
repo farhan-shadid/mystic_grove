@@ -2,7 +2,8 @@
 extern bool saveExists;
 extern int gameState;
 extern int menuBgImage;
-
+extern int storyImg;
+extern int creditImg;
 struct MenuButton {
 	int x, y, width, height;
 	char label[20];
@@ -53,36 +54,14 @@ void drawMenuScreen() {
 
 void drawStoryPopup() {
 	drawMenuScreen();
-	iSetColor(243, 206, 161);
-	iFilledRectangle(200, 200, 600, 600);
-	iSetColor(255, 0, 0);
-	iText(420, 750, "-- STORY --", GLUT_BITMAP_TIMES_ROMAN_24);
-	iSetColor(0, 0, 0);
-	iText(250, 650, "A great evil has corrupted the Mystic Grove...", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 630, "The holy spirit has been captured...", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 610, "You are the holy saint whom the fairy prophesied about", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 590, "You must rescue the holy spirit....", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 570, "No matter the obstacle that may stand in your way...", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 550, "You must overcome 'em all to save the holy spirit!", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 530, "You are the last hope the forest has...", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 510, "Shall you fail to save the holy spirit..........", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 490, " ", GLUT_BITMAP_HELVETICA_18);
-	iText(250, 470, "All the lives in this forest will be doomed..!!", GLUT_BITMAP_HELVETICA_18);
-
-
+	if (storyImg != -1) {
+		iShowImage(100, 200, 800, 560, storyImg);
+	}
 }
 
 void drawCreditsPopup() {
 	drawMenuScreen();
-	iSetColor(243, 206, 161);
-	iFilledRectangle(300, 300, 400, 400);
-	iSetColor(255, 0, 0);
-	iText(420, 650, "-- CREDITS --", GLUT_BITMAP_TIMES_ROMAN_24);
-	iSetColor(0, 0, 0);
-	iText(350, 550, "Faheem Shahrier", GLUT_BITMAP_HELVETICA_18);
-	iText(350, 530, "ID: 00725105101061", GLUT_BITMAP_HELVETICA_18);
-	iText(350, 500, "Maimuna Alam", GLUT_BITMAP_HELVETICA_18);
-	iText(350, 480, "ID: 00725105101077", GLUT_BITMAP_HELVETICA_18);
-	iText(350, 450, "Farhan Shadid", GLUT_BITMAP_HELVETICA_18);
-	iText(350, 430, "ID: 00725105101063", GLUT_BITMAP_HELVETICA_18);
+	if (creditImg != -1) {
+		iShowImage(100, 200, 800, 560, creditImg);
+	}
 }
