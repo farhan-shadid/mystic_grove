@@ -73,11 +73,11 @@ Open the project in Visual Studio 2013
 
 ## Screenshots
 
-### **Menu**
-<img src="https://github.com/user-attachments/assets/812b978b-b4f9-4cc2-8116-067f85e943bd" width="200" height="200">
+### **Main Map**
+<img src="Images/Screenshot_2.png" width="350" height="350">
 
-### **Character**
-<img src="https://github.com/user-attachments/assets/5c8a5fbb-6ebf-48cd-bff0-8235e79d9773" width="200" height="200">
+### **Portal**
+<img src="Images/Screenshot_1.png" width="350" height="350">
 
 ## Youtube Link
 [CSE 1200 Project: The Fallen Kingdom](https://www.youtube.com/)
