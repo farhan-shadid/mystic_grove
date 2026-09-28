@@ -49,7 +49,7 @@ Open the project in Visual Studio 2013
 - 's' to move back
 - 'd' to move right
 -  SPACE bar to shoot
--  c to shoot in final stage
+-  'c' to shoot in final stage
 
 
 
