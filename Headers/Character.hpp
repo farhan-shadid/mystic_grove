@@ -6,40 +6,36 @@
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 
+extern int imgWeaponFront;
+extern  int imgWeaponLeft;
+extern int imgWeaponRight;
+extern int imgWeaponBack;
+extern int heartFullImg;
+extern int heartHalfImg;
 
 #define PI 3.14159265358979323846
 
-extern int heartFullImg;
-extern int heartHalfImg;
-// ======================================================
-// PLAYER POSITION
-// playerX, playerY = character's FOOT/GROUND position
-// ======================================================
-
-double playerX = 350.0;
-double playerY = 200.0;
 
 
-// ======================================================
-// PLAYER DIRECTION
-//
-// 0 = FRONT, 1 = LEFT, 2 = RIGHT, 3 = BACK
-// ======================================================
+#define MAIN_SPAWN_X 460.0
+#define MAIN_SPAWN_Y 100.0
+
+#define PORTAL1_SPAWN_X 500.0
+#define PORTAL1_SPAWN_Y 100.0
+
+#define PORTAL2_SPAWN_X 500.0
+#define PORTAL2_SPAWN_Y 100.0
+
+double playerX = MAIN_SPAWN_X;
+double playerY = MAIN_SPAWN_Y;
+
 
 int playerDirection = 0;
 
 
-// ======================================================
-// WALKING ANIMATION
-// ======================================================
-
 bool playerWalking = false;
 double walkFrame = 0;
 
-
-// ======================================================
-// CHARACTER SIZE (Scaled up 3x from original)
-// ======================================================
 
 #define LEG_LENGTH 10.8
 #define LEG_WIDTH 3.6
@@ -51,26 +47,23 @@ double walkFrame = 0;
 #define BODY_HEIGHT 15.6
 
 #define HEAD_RADIUS 8.7
+bool lightningCollected = false;
 
-// 1. Define the blueprint for a projectile
 struct Stone {
 	double x;
 	double y;
-	bool active;    // Is it currently flying?
-	int direction;  // Which way is it going?
+	bool active;    
+	int direction;  
+	bool isLightning; 
 };
 
-// 2. Create the Object Pool
 const int MAX_STONES = 5;
 Stone playerStones[MAX_STONES];
 
-// 3. Prevent rapid-fire machine gun stones
 int throwCooldown = 0;
 
+extern int portal3LightningImg;
 
-// ======================================================
-// COLORS
-// ======================================================
 
 inline void skin() { iSetColor(255, 205, 165); }
 inline void hair() { iSetColor(90, 60, 40); }
@@ -83,9 +76,6 @@ inline void beltColor() { iSetColor(75, 50, 30); }
 inline void black() { iSetColor(20, 20, 20); }
 
 
-// ======================================================
-// SHADOW
-// ======================================================
 
 inline void drawShadow(double x, double y)
 {
@@ -94,9 +84,6 @@ inline void drawShadow(double x, double y)
 }
 
 
-// ======================================================
-// LIMB DRAWING
-// ======================================================
 
 inline void drawLimb(double jointX, double jointY, double length, double width, double angle)
 {
@@ -127,9 +114,6 @@ inline void drawLimb(double jointX, double jointY, double length, double width, 
 }
 
 
-// ======================================================
-// LIMB END X & Y
-// ======================================================
 
 inline double limbEndX(double jointX, double length, double angle)
 {
@@ -144,9 +128,8 @@ inline double limbEndY(double jointY, double length, double angle)
 }
 
 
-// ======================================================
 // FRONT BOOT
-// ======================================================
+
 
 inline void drawFrontBoot(double x, double y, int side)
 {
@@ -172,10 +155,7 @@ inline void drawFrontBoot(double x, double y, int side)
 	iFilledPolygon(bx, by, 4);
 }
 
-
-// ======================================================
 // SIDE BOOT
-// ======================================================
 
 inline void drawSideBoot(double x, double y, int direction)
 {
@@ -204,9 +184,8 @@ inline void drawSideBoot(double x, double y, int direction)
 }
 
 
-// ======================================================
 // FRONT VIEW
-// ======================================================
+
 
 inline void drawFront(double x, double y)
 {
@@ -271,6 +250,9 @@ inline void drawFront(double x, double y)
 	iFilledCircle(leftHandX, leftHandY, 2.1);
 	iFilledCircle(rightHandX, rightHandY, 2.1);
 
+	if (gameState == 6) {
+		iShowImage(rightHandX - 8, rightHandY - 8, 16, 16, imgWeaponFront);
+	}
 	// BELT
 	beltColor();
 	iFilledRectangle(x - 7.8, y + 17.7 + bob, 15.6, 1.8);
@@ -311,9 +293,9 @@ inline void drawFront(double x, double y)
 }
 
 
-// ======================================================
+
 // LEFT VIEW
-// ======================================================
+
 
 inline void drawLeft(double x, double y)
 {
@@ -367,6 +349,9 @@ inline void drawLeft(double x, double y)
 
 	skin();
 	iFilledCircle(handX, handY, 2.1);
+	if (gameState == 6) {
+		iShowImage(handX - 8, handY - 8, 16, 16, imgWeaponLeft);
+	}
 
 	beltColor();
 	iFilledRectangle(x - 6.3, y + 17.7 + bob, 12.6, 1.8);
@@ -391,9 +376,8 @@ inline void drawLeft(double x, double y)
 }
 
 
-// ======================================================
 // RIGHT VIEW
-// ======================================================
+
 
 inline void drawRight(double x, double y)
 {
@@ -447,6 +431,11 @@ inline void drawRight(double x, double y)
 
 	skin();
 	iFilledCircle(handX, handY, 2.1);
+	if (gameState == 6) {
+		iShowImage(handX - 8, handY - 8, 16, 16, imgWeaponRight);
+	}
+
+
 
 	beltColor();
 	iFilledRectangle(x - 6.3, y + 17.7 + bob, 12.6, 1.8);
@@ -471,9 +460,7 @@ inline void drawRight(double x, double y)
 }
 
 
-// ======================================================
 // BACK VIEW
-// ======================================================
 
 inline void drawBack(double x, double y)
 {
@@ -530,8 +517,14 @@ inline void drawBack(double x, double y)
 	double rightHandY = limbEndY(shoulderY, ARM_LENGTH, rightArmAngle);
 
 	skin();
+
 	iFilledCircle(leftHandX, leftHandY, 2.1);
 	iFilledCircle(rightHandX, rightHandY, 2.1);
+	if (gameState == 6) {
+		iShowImage(rightHandX - 8, rightHandY - 8, 16, 16, imgWeaponBack);
+	}
+	
+
 
 	skin();
 	iFilledRectangle(x - 2.4, y + 27.3 + bob, 4.8, 3.3);
@@ -541,16 +534,12 @@ inline void drawBack(double x, double y)
 }
 
 
-// ======================================================
 // PLAYER CONTROLLER
-// ======================================================
 
-
-// Health Bar
 inline void drawPlayer()
 {
 	if (playerIFrames > 0) {
-		
+
 		if (playerIFrames % 4 < 2) return;
 	}
 	if (playerDirection == 0) drawFront(playerX, playerY);
@@ -562,6 +551,8 @@ inline void drawPlayer()
 void drawHealthUI() {
 	int fullHearts = playerHealth / 2;
 	int hasHalfHeart = playerHealth % 2;
+
+
 	int maxHearts = maxHealth / 2;
 
 	for (int i = 0; i < maxHearts; i++) {
@@ -581,10 +572,11 @@ void drawHealthUI() {
 			}
 		}
 	}
+
 }
 
 
 
 
 
-#endif // MYSTIC_GROVE_HPP
+#endif 
