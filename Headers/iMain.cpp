@@ -266,7 +266,7 @@ void iDraw() {
 	
 		if (!slimesRemaining && spellCollected) {
 			if (levelClearTimer == 0) {
-				levelClearTimer = 300;
+				levelClearTimer = 120;
 			}
 		}
 	}
